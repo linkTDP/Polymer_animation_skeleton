@@ -1,0 +1,20 @@
+{
+  "name": "LODr crowd",
+  "version": "1.0.0",
+  "homepage": "",
+  "description": "", 
+  "keywords": [
+    "Linked",
+    "Open",
+    "Data",
+    "LODeX",
+    "SPARQL"
+  ],
+  "authors": [
+    "Fabio Benedetti"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#^1.0.0"
+    "iron-list":"iron-list"
+  }
+}

@@ -1,0 +1,71 @@
+<dom-module id="entity-liel">
+	<template>
+		<style>
+			:host {
+				display: block;
+				padding: 5px;
+			}
+			img {
+			  width:  auto;
+			  max-height: 75px;
+			  max-width: 75px;
+			  padding: 5px;
+			  padding-top: 5px;
+			}
+
+			.img-cont {
+			  -webkit-transform-style: preserve-3d;
+			  -moz-transform-style: preserve-3d;
+			  transform-style: preserve-3d;
+
+			}
+			.mat{
+				padding: 3px;
+			}
+			#abstract{
+				font-size: 10px;
+			}
+			.label{
+				font-size: 10px;
+				background: black;
+				color: white;
+				margin: 2px;
+				padding:1px;
+			}
+		</style>
+		<paper-material class="mat" elevation="1">
+			<div class="layout vertical">
+				<div class="layout horizontal">
+					<div>
+						<template is="dom-if" if="{{entity.img}}">
+							<div class="img-cont"><iron-image style="width:70px; height:70px;margin:5px;" src="{{entity.img}}" preload sizing="contain"></iron-image></div>
+						</template>
+					</div>
+					<div class="layout vertical flex">
+						<div class="title"><b>{{entity.label.0}}</b></div>
+						<div id ="abstract">{{entity.abstract}}</div>
+					</div>
+				</div>
+				<div class="horizontal layout wrap">
+					<template is="dom-repeat" items="{{entity.label}}">
+						<div class="label">{{item}}</div>
+					</template>
+				</div>
+			</div>
+		</paper-material>
+	</template>
+	<script>
+		Polymer({
+			is: 'entity-liel',
+			properties:{
+				entity:{
+					notify:true,
+					type:Object
+				}
+			},
+			ready:function(){
+				console.log(this.entity)
+			}
+		});
+	</script>
+</dom-module>

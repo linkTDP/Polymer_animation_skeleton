@@ -1,0 +1,234 @@
+<dom-module id="dbpedia-snip">
+<style>
+img {
+  width:  auto;
+  max-height: 250px;
+  max-width: 250px;
+  padding: 10px;
+  padding-top: 20px;
+}
+
+.img-cont {
+  -webkit-transform-style: preserve-3d;
+  -moz-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+
+.abstract{
+  font-size: 9pt;
+}
+
+.title{
+    font-size: 20px;
+    padding-bottom: 10px;
+    padding-top: 10px;
+    
+}
+
+.urient{
+    font-size: 12px;
+    margin-left: 2%;
+    margin-right: auto;
+    padding-top: 16px;
+}
+.properties{
+	font-size: 14px;
+    padding-top: 15px;
+    padding-right:2%;
+}
+
+.litteral_title{
+	font-size: 16px;
+    padding: 3px;
+    margin: 3px;
+
+}
+
+.prop_name{
+	font-size: 11px;
+}
+
+.Content{
+	overflow:auto;
+	height:244px;
+}
+
+</style>
+
+<template>
+	<paper-material  elevation="1">
+		<div class="layout horizontal">
+			<div class="layout vertical">
+				<div>	
+					<template is="dom-if" if="{{entityObj.foaf_depiction}}">
+						<div class="img-cont"><img src="{{entityObj.foaf_depiction.0.o_value}}"></div>
+					</template>
+				</div>
+				<div>
+					<paper-material style="margin:3px;padding:3px;" elevation="2" >
+					<div class="litteral_title">Numbers </div>
+<!-- 						<iron-list items="{{_toArrayNumber(entityObj)}}" as="item"> -->
+					<div class="Content">
+						<template is="dom-repeat" items="{{_toArrayNumber(entityObj)}}">
+
+								<div class="layout horizontal" style="margin:2px">
+									<div class="layout flex prop_name"><b>{{item.value.0.property_label}}</b></div>
+									<div class="layout prop_name">{{item.value.0.o_value}}</div>
+								</div>
+
+<!-- 							</iron-list> -->
+						</template>
+					</div>
+					</paper-material>
+				</div>
+			</div>
+			<div class="layout vertical">
+				<div class="layout horizontal"> 
+					<div class="title"><b >{{entityObj.rdfs_label.0.o_value}}</b></div>
+					<div class="urient layout center flex"><a  href={{uri}}>{{uri}}</a></div>
+					<div class="properties">N. properties: <b>{{n_properties}}</b></div>
+					<div class="properties">N. unique properties: <b>{{nu_properties}}</b></div>
+				</div>
+				<span class="abstract">{{entityObj.dbo_abstract.0.o_value}}</span>
+			</div>
+
+		</div>
+	</paper-material>
+<iron-ajax
+	auto="{{isParamsReady}}"
+    url="http://dbpedia-live.openlinksw.com/sparql"
+    handle-as="json"
+    on-response="handleResponse"
+    last-response="{{entity}}"
+    debounce-duration="300"></iron-ajax>
+</template>
+<script>
+(function () {
+    Polymer({
+      is: 'dbpedia-snip',
+      properties: {
+        entity: {
+          type: Object,
+          notify: true,
+        },
+        isParamsReady:{
+            type:Boolean,
+            computed:'_isParamsReady(uri)'
+     	},
+        vocabulary: {
+            type: Array,
+            notify: false,
+          },
+        pref: {
+        	type: Array,
+            notify: false,
+        },
+        n_properties: {
+        	  type: Number,
+        	  computed: 'compute_n_properties(entityObj)'
+        },
+        nu_properties: {
+      	  type: Number,
+      	  computed: 'compute_nu_properties(entityObj)'
+      	},
+        par:{
+        	type:String,
+        	notify:true,
+        },
+        uri:{
+        	type:String,
+        	notify:true,
+        	observer: '_uriChanged'
+        },
+        entityObj:{
+        	type:Object,
+        	notify:true,
+        }
+      },
+      _toArrayNumber: function(obj) {
+          return Object.keys(obj).map(function(key) {
+            return {name: key, value: obj[key]};
+          }).filter(function(a){return this._isNumber(a);}.bind(this));
+        },
+      compute_n_properties:function(entityObj){
+    	  
+    	  return _.reduce(_.map(_.keys(entityObj),function(a) {return entityObj[a].length}),function (a,b){return a+b});
+    	  
+      },
+compute_nu_properties:function(entityObj){
+			console.log(_.keys(entityObj).length);
+			return _.keys(entityObj).length;
+      },
+      _isNumber:function(item){
+    	  console.log(item)
+    	  var numbers=['http://www.w3.org/2001/XMLSchema#double','http://www.w3.org/2001/XMLSchema#integer']
+//     	  http://www.w3.org/2001/XMLSchema#double
+// 		http://www.w3.org/2001/XMLSchema#integer
+console.log(item.value[0].o_datatype.toLowerCase())
+    	  return (_.findIndex(numbers,function (a){return (a.toLowerCase()==item.value[0].o_datatype.toLowerCase())}.bind(this)) > -1);
+      },
+      _uriChanged:function(){
+    	  this.$$('iron-ajax').params = {
+              'output' : 'json',
+              'query' : 'SELECT ?p ?o ?label { <'+this.uri+'> ?p ?o . OPTIONAL {?p rdfs:label ?label. FILTER (lang(?label) = "en")}}',
+              'default-graph-uri': 'http://dbpedia.org'
+            };
+            this.$$('iron-ajax').generateRequest();
+    	  
+    	  
+    	  
+//     	JSON.stringify({output: json, password: password});
+//     	this.par=
+//     	console.log(this.par)
+//     	this.$.ajaxWeapons.param=this.par;
+//     	this.$.ajaxWeapons.generateRequest();
+      },
+      _isParamsReady:function(uri){
+    	return uri!=null;  
+      },
+      ready: function() {
+    	  this.vocabulary=['http://www.w3.org/1999/02/22-rdf-syntax-ns#',
+    	                   'http://www.w3.org/2002/07/owl#',
+    	                   'http://xmlns.com/foaf/0.1/',
+    	                   'http://dbpedia.org/ontology/',
+    	                   'http://www.w3.org/2000/01/rdf-schema#',
+    	                   'http://dbpedia.org/property/',
+    	                   'http://purl.org/dc/terms/',
+    	                   'http://www.w3.org/2003/01/geo/wgs84_pos#',
+    	                   'http://www.georss.org/georss/',
+    	                   'http://dbpedia.org/ontology/PopulatedPlace/'
+    	                   ];
+    	  
+    	  this.pref=['rdf','owl','foaf','dbo','rdfs','dbp','purl','geo','georss','dboPP']
+    	  console.log(this.prefix)
+      },
+      handleResponse:function(request){
+    	  this.entityObj=_.groupBy(_.map(this.entity.results.bindings,function(a){ 
+    		  return {'key':this.getNameObj(a.p.value)
+    		          ,'property':a.p.value
+    		          ,'property_label':a.hasOwnProperty('label')?a.label.value:""
+    		          ,'o_type':a.o.type
+    		          ,'o_value':(a.o.type=="uri")?this.getNameObj(a.o.value):a.o.value
+    		          ,'o_datatype':(a.o.type=="typed-literal")?a.o.datatype:""
+    		  };}.bind(this)),
+    		        		  function(a) {return a.key})
+    	  console.log(this.entityObj)
+      },
+      findIndxfix: function(str){
+//     	  console.log(str)
+    	  inside = function(a){return (str.replace(a,"").search('/') < 0 && str.replace(a,"").search('#') <0)}
+    	  return _.findIndex(this.vocabulary,inside)
+          
+      },
+      getNameObj:function(str){
+    	  if (this.findIndxfix(str) >= 0){
+    		  return this.pref[this.findIndxfix(str)]+"_"+str.replace(this.vocabulary[this.findIndxfix(str)],"")
+    	  }else{
+    		  return str
+    	  }
+      }
+    });
+  })();
+</script>
+
+</dom-module>
